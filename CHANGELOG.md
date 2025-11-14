@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PowerShell parsing errors with nested here-strings on Windows PowerShell 5.1
 - Variable interpolation issues in generated scripts
 - String terminator errors in script generation
+- XML manipulation error when creating event triggers (AppendChild method not found)
+- Scheduled task triggers not being properly configured
 
 ### Added
 - Test-Syntax.ps1 for pre-flight syntax validation
