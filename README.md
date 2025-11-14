@@ -68,13 +68,14 @@ The wizard will guide you through:
 Monitors Windows Server Backup events and sends notifications:
 
 **Successful Backup:**
-- Triggers on: Event ID 14 (Backup operation completed)
+- Triggers on: Event ID 14 (Backup operation completed) or Event ID 4
 - Verifies: Event ID 4 (Successful backup) exists
 - Sends to: `SuccessfulBackups` transport
 
 **Failed Backup:**
-- Triggers on: Event ID 14 (Backup operation completed)
-- Checks: No Event ID 4 found (indicates failure)
+- Triggers on: Event ID 5 (Backup failed) or Event ID 14 (with Event ID 5 present)
+- Verifies: Event ID 5 (Backup failed) exists
+- Includes detailed error information from Event ID 5
 - Sends to: `FailedBackups` transport
 
 ---
@@ -168,13 +169,16 @@ This allows the wizard to remember your settings and update configurations witho
 
 ### Trigger
 - **Event Log:** Microsoft-Windows-Backup
-- **Event ID:** 14 (Backup operation completed)
+- **Event IDs:**
+  - 14 (Backup operation completed)
+  - 5 (Backup failed - immediate notification)
 
 ### Action
 Executes PowerShell script that:
-1. Queries Event Log for recent Event ID 4 (success) or errors
-2. Determines backup status (success/failure)
-3. Sends notification to appropriate transport
+1. Queries Event Log for Event ID 4 (success) and Event ID 5 (failure)
+2. Determines backup status based on which event is present
+3. Extracts detailed error information from Event ID 5 if backup failed
+4. Sends notification to appropriate transport (SuccessfulBackups or FailedBackups)
 
 ### Security
 - Runs as: SYSTEM

@@ -20,7 +20,7 @@
     to know the underlying bot/channel details.
 
 .NOTES
-    Version: 0.1.1
+    Version: 0.1.2
     Author: VLABS Infrastructure
     Requires: Administrator privileges
     API Compatibility: NotificationsServer API v1.0.0+
@@ -234,6 +234,13 @@ $successEvent = Get-WinEvent -FilterHashtable @{
     StartTime = (Get-Date).AddMinutes(-10)
 } -MaxEvents 1 -ErrorAction SilentlyContinue
 
+# Check for Event ID 5 (failed backup) in the last 10 minutes
+$failureEvent = Get-WinEvent -FilterHashtable @{
+    LogName = 'Microsoft-Windows-Backup'
+    ID = 5
+    StartTime = (Get-Date).AddMinutes(-10)
+} -MaxEvents 1 -ErrorAction SilentlyContinue
+
 # Determine backup status and select transport
 if ($successEvent) {
     # Successful backup - use SuccessfulBackups transport
@@ -249,30 +256,40 @@ if ($successEvent) {
     $body += "Time: $($backupTime.ToString('yyyy-MM-dd HH:mm:ss'))`n"
     $body += "Status: $status`n`n"
     $body += "Details:`n$backupDetails"
-} else {
-    # Failed backup (Event 14 without Event 4) - use FailedBackups transport
+} elseif ($failureEvent) {
+    # Failed backup (Event ID 5 detected) - use FailedBackups transport
     $transport = "FailedBackups"
     $subject = "EMOJI_X Backup Failed - $env:COMPUTERNAME"
     $status = "Failed"
 
-    # Try to get error details
+    # Extract detailed error information from Event 5
+    $failureDetails = $failureEvent.Message
+    $failureTime = $failureEvent.TimeCreated
+
+    # Also gather additional error events for context
     $errorEvents = Get-WinEvent -FilterHashtable @{
         LogName = 'Microsoft-Windows-Backup'
         Level = 2,3  # Error and Warning
         StartTime = (Get-Date).AddMinutes(-10)
     } -MaxEvents 5 -ErrorAction SilentlyContinue
 
-    $errorDetails = if ($errorEvents) {
-        ($errorEvents | ForEach-Object { "$($_.TimeCreated.ToString('HH:mm:ss')) - $($_.Message)" }) -join "`n`n"
+    $additionalErrors = if ($errorEvents -and $errorEvents.Count -gt 1) {
+        "`n`nAdditional Error Events:`n" + (($errorEvents | Where-Object { $_.Id -ne 5 } | ForEach-Object { "$($_.TimeCreated.ToString('HH:mm:ss')) [ID:$($_.Id)] - $($_.Message)" }) -join "`n`n")
     } else {
-        "No error details available. Check Event Viewer for more information."
+        ""
     }
 
     $body = "Windows Server Backup failed`n`n"
     $body += "Server: $env:COMPUTERNAME`n"
-    $body += "Time: $($backupTime.ToString('yyyy-MM-dd HH:mm:ss'))`n"
+    $body += "Failure Time: $($failureTime.ToString('yyyy-MM-dd HH:mm:ss'))`n"
     $body += "Status: $status`n`n"
-    $body += "Error Details:`n$errorDetails"
+    $body += "Error Details (Event ID 5):`n$failureDetails"
+    $body += $additionalErrors
+} else {
+    # Inconclusive - Event 14 fired but no Event 4 or 5 found
+    # This might happen if backup is still in progress or status not yet logged
+    # Exit without notification to avoid false alerts
+    exit 0
 }
 
 # Send notification using transport
@@ -336,11 +353,13 @@ try {
     # Create new Triggers element
     $triggersElement = $taskXml.CreateElement("Triggers", $taskXml.Task.NamespaceURI)
 
-    # Create event trigger XML query
+    # Create event trigger XML query for Event IDs 14 and 5
+    # Event 14: Backup operation completed (success or failure)
+    # Event 5: Backup failed (immediate failure notification)
     $eventTriggerXml = @"
 <QueryList>
   <Query Id="0" Path="Microsoft-Windows-Backup">
-    <Select Path="Microsoft-Windows-Backup">*[System[(EventID=14)]]</Select>
+    <Select Path="Microsoft-Windows-Backup">*[System[(EventID=14 or EventID=5)]]</Select>
   </Query>
 </QueryList>
 "@
@@ -369,7 +388,7 @@ try {
     Register-ScheduledTask -TaskName $taskName -Xml $taskXml.OuterXml | Out-Null
 
     Write-ColorMessage "Scheduled task '$taskName' configured successfully" -Type Success
-    Write-ColorMessage "Task will trigger on Event ID 14 from Microsoft-Windows-Backup log" -Type Info
+    Write-ColorMessage "Task will trigger on Event ID 14 (Backup completed) and Event ID 5 (Backup failed)" -Type Info
 
     return $true
 }
@@ -493,7 +512,9 @@ function Invoke-WSBackupConfiguration {
         Write-Host ""
         Write-ColorMessage "Windows Server Backup notifications enabled successfully!" -Type Success
         Write-Host ""
-        Write-Host "The scheduled task will now monitor for Event ID 14 (Backup completed)" -ForegroundColor Gray
+        Write-Host "The scheduled task will now monitor for:" -ForegroundColor Gray
+        Write-Host "  - Event ID 14 (Backup operation completed)" -ForegroundColor Gray
+        Write-Host "  - Event ID 5 (Backup failed)" -ForegroundColor Gray
         Write-Host "and automatically send notifications using configured transports." -ForegroundColor Gray
     } else {
         Write-ColorMessage "Failed to create scheduled task" -Type Error

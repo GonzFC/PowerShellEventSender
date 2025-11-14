@@ -16,6 +16,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HTTPS/TLS support
 - API authentication
 
+## [0.1.2] - 2025-11-14
+
+### Added
+- **Event ID 5 Detection**: Explicit detection of backup failure events
+  - Scheduled task now triggers on Event ID 5 (Backup failed) in addition to Event ID 14
+  - Script explicitly checks for Event ID 5 to confirm failures
+  - Extracts detailed error information directly from Event ID 5 message
+  - Added inconclusive state handling (exits without notification if neither Event 4 nor 5 found)
+
+### Changed
+- Improved failure detection logic from implicit (no Event 4 = failure) to explicit (Event 5 = failure)
+- Enhanced error reporting with Event ID 5 details plus additional error context
+- Updated scheduled task trigger XML to monitor `EventID=14 or EventID=5`
+- User-facing messages now mention both Event ID 14 and Event ID 5 monitoring
+
+### Fixed
+- False positive failure notifications when backup status is inconclusive
+- Missing detailed error information from actual failure events
+
+### Documentation
+- Updated README.md with Event ID 5 detection details
+- Updated ARCHITECTURE.md flow diagrams to show Event ID 5 logic
+- Updated scheduled task trigger documentation
+
 ## [0.1.1] - 2025-11-14
 
 ### Changed

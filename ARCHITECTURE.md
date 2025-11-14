@@ -201,11 +201,15 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 | Property | Value |
 |----------|-------|
 | Name | `VLABS - WSBackup Notifications` |
-| Trigger | Event-based (Event ID 14 from Microsoft-Windows-Backup) |
+| Trigger | Event-based (Event ID 14 and 5 from Microsoft-Windows-Backup) |
 | Action | Execute PowerShell script |
 | User | SYSTEM |
 | Run Level | Highest |
 | Settings | Allow start on batteries, start when available |
+
+**Event IDs Monitored:**
+- **Event ID 14**: Backup operation completed (may be success or failure)
+- **Event ID 5**: Backup failed (immediate failure notification)
 
 **XML Structure:**
 ```xml
@@ -217,7 +221,7 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
         <QueryList>
           <Query Id="0" Path="Microsoft-Windows-Backup">
             <Select Path="Microsoft-Windows-Backup">
-              *[System[(EventID=14)]]
+              *[System[(EventID=14 or EventID=5)]]
             </Select>
           </Query>
         </QueryList>
@@ -271,8 +275,9 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 ┌──────────────────────────────────────────────────────────────┐
 │ 4. Event Log Query                                           │
 │    • Query for Event ID 14 (last 5 minutes)                  │
-│    • Query for Event ID 4 (last 10 minutes)                  │
-│    • Query for error events (if needed)                      │
+│    • Query for Event ID 4 - Success (last 10 minutes)        │
+│    • Query for Event ID 5 - Failure (last 10 minutes)        │
+│    • Query for additional error events (if Event 5 found)    │
 └────────────────────────┬─────────────────────────────────────┘
                          │
                          ▼
@@ -283,12 +288,17 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 │    └─────┬───────────────┬──────┘                            │
 │          │ YES           │ NO                                │
 │          ▼               ▼                                    │
-│    ┌─────────┐    ┌───────────┐                             │
-│    │ Success │    │  Failure  │                             │
-│    └─────┬───┘    └─────┬─────┘                             │
-│          │              │                                    │
-│          ▼              ▼                                    │
-│    Transport:      Transport:                               │
+│    ┌─────────┐    ┌──────────────────┐                      │
+│    │ Success │    │ Event ID 5 found?│                      │
+│    └─────┬───┘    └─────┬──────┬─────┘                      │
+│          │              │ YES  │ NO                          │
+│          │              ▼      ▼                             │
+│          │         ┌─────────┐ Exit                          │
+│          │         │ Failure │ (Inconclusive)                │
+│          │         └─────┬───┘                               │
+│          │               │                                   │
+│          ▼               ▼                                   │
+│    Transport:       Transport:                               │
 │    SuccessfulBackups   FailedBackups                        │
 └────────────────────────┬─────────────────────────────────────┘
                          │
