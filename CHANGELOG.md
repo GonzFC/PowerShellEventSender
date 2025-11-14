@@ -7,18 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- PowerShell parsing errors with nested here-strings on Windows PowerShell 5.1
-- Variable interpolation issues in generated scripts
-- String terminator errors in script generation
-- XML manipulation error when creating event triggers (AppendChild method not found)
-- Scheduled task triggers not being properly configured
-
-### Added
-- Test-Syntax.ps1 for pre-flight syntax validation
-- TESTING.md with comprehensive testing guide
-- Pre-deployment and post-configuration test procedures
-
 ### Planned
 - Windows Update event monitoring
 - Service status change notifications
@@ -27,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple NotificationsServer support
 - HTTPS/TLS support
 - API authentication
+
+## [0.1.1] - 2025-11-14
+
+### Changed
+- **Updated for Transports Architecture**: Aligned with NotificationsServer API v1.0.0
+  - Updated variable names from `$channel` to `$transport` for clarity
+  - Added Transports architecture explanation in script header
+  - Updated all user-facing messages to reference "transports" instead of "channels"
+  - Updated README.md with "Understanding Transports" section
+  - Updated ARCHITECTURE.md with Transport Mapping Strategy
+  - API compatibility note added: Requires NotificationsServer API v1.0.0+
+
+### Documentation
+- Enhanced script header with detailed Transports explanation
+- Added inline comments explaining API parameter backward compatibility
+- Updated all examples to reflect Transport terminology
 
 ## [0.1.0] - 2025-11-14
 

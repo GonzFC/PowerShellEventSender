@@ -79,15 +79,15 @@ The PowerShell Event Sender bridges Windows Event Log events with Telegram notif
 ┌─────────────────────────────────────────────────────────────┐
 │                NotificationsServer (macOS)                   │
 │  • Receives REST API call                                   │
-│  • Routes to appropriate Telegram channel                   │
+│  • Resolves transport to bot + channel                      │
 │  • Sends message via Telegram Bot API                       │
 └─────────────────────────────────────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Telegram Channels                         │
-│  • SuccessfulBackups                                        │
-│  • FailedBackups                                            │
+│                    Telegram Transports                       │
+│  • SuccessfulBackups (transport = bot + channel)            │
+│  • FailedBackups (transport = bot + channel)                │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -288,7 +288,7 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 │    └─────┬───┘    └─────┬─────┘                             │
 │          │              │                                    │
 │          ▼              ▼                                    │
-│    Channel:        Channel:                                 │
+│    Transport:      Transport:                               │
 │    SuccessfulBackups   FailedBackups                        │
 └────────────────────────┬─────────────────────────────────────┘
                          │
@@ -297,7 +297,7 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 │ 6. Notification Payload Creation                             │
 │    {                                                         │
 │      "type": "telegram",                                     │
-│      "channels": ["SuccessfulBackups"],                      │
+│      "channels": ["SuccessfulBackups"],  # References transport
 │      "subject": "✅ Backup Successful - WSSERVER",           │
 │      "body": "Windows Server Backup completed..."            │
 │    }                                                         │
@@ -315,8 +315,8 @@ Invoke-RestMethod -Uri $NotifyUri -Method Post -Body $payload -ContentType "appl
 ┌──────────────────────────────────────────────────────────────┐
 │ 8. NotificationsServer Processing                            │
 │    • Validates request                                       │
-│    • Resolves channel name from catalog                      │
-│    • Calls Telegram Bot API                                  │
+│    • Resolves transport to bot + channel                     │
+│    • Calls Telegram Bot API with resolved credentials        │
 │    • Returns response                                        │
 └────────────────────────┬─────────────────────────────────────┘
                          │
@@ -782,32 +782,46 @@ SENT_AT: 2025-11-14T02:15:33 CST
 - Event ID: 1000 (application error)
 - Channels: ApplicationErrors
 
-### Channel Mapping Strategy
+### Transport Mapping Strategy
 
-**Recommendation:** Use different Telegram channels for different event types:
+**Recommendation:** Use different Telegram transports for different event types.
+
+**Understanding Transports:**
+A transport is a named combination of a Telegram bot and channel. The NotificationsServer
+manages the bot tokens and channel IDs, while clients (like this PowerShell script) simply
+reference transport names.
+
+**Example Configuration on NotificationsServer:**
 
 ```yaml
 # catalog.yaml on NotificationsServer
+bots:
+  VLABS_Notifications_bot:
+    token: "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+    username: "@VLABS_Notifications_bot"
+
 channels:
-  SuccessfulBackups:
+  VLABS-BK-Successful-Notification:
     id: "-1003351266067"
-    description: "Successful backup notifications"
+    type: private
+
+  VLABS-BK-Failed-Notification:
+    id: "-1003338758947"
+    type: private
+
+transports:
+  SuccessfulBackups:
+    bot: VLABS_Notifications_bot
+    channel: VLABS-BK-Successful-Notification
 
   FailedBackups:
-    id: "-1003338758947"
-    description: "Failed backup notifications"
+    bot: VLABS_Notifications_bot
+    channel: VLABS-BK-Failed-Notification
+```
 
-  ServiceAlerts:
-    id: "-1001234567890"
-    description: "Service status changes"
-
-  SecurityAlerts:
-    id: "-1009876543210"
-    description: "Security event notifications"
-
-  SystemErrors:
-    id: "-1005555555555"
-    description: "System errors and warnings"
+**From PowerShell, you reference the transport name:**
+```powershell
+channels = @("SuccessfulBackups")  # This resolves to bot + channel on server
 ```
 
 ---
@@ -874,7 +888,7 @@ Test-NotificationsServer -ServerIP "172.16.8.66"
 
 **Test Notification Sending:**
 ```powershell
-Send-TestNotification -ServerIP "172.16.8.66" -Channel "SuccessfulBackups"
+Send-TestNotification -ServerIP "172.16.8.66" -Transport "SuccessfulBackups"
 # Check Telegram for test message
 ```
 

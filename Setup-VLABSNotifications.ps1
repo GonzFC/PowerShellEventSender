@@ -7,10 +7,23 @@
     via the NotificationsServer. Creates and manages Windows Scheduled Tasks
     that monitor events and send notifications automatically.
 
+    TRANSPORTS ARCHITECTURE:
+    This script uses the NotificationsServer's Transports system. A "transport"
+    is a named combination of a Telegram bot and channel configured on the server.
+
+    Example Transports:
+    - "SuccessfulBackups" -> Routes to success notification channel
+    - "FailedBackups"     -> Routes to failure notification channel
+
+    The NotificationsServer manages the bot tokens and channel IDs. This script
+    simply references transport names like "SuccessfulBackups" without needing
+    to know the underlying bot/channel details.
+
 .NOTES
-    Version: 0.1.0
+    Version: 0.1.1
     Author: VLABS Infrastructure
     Requires: Administrator privileges
+    API Compatibility: NotificationsServer API v1.0.0+
 
 .EXAMPLE
     .\Setup-VLABSNotifications.ps1
@@ -134,24 +147,28 @@ function Send-TestNotification {
     <#
     .SYNOPSIS
         Send a test notification to verify configuration
+
+    .NOTES
+        The Transport parameter specifies a named combination of bot + channel
+        configured on the NotificationsServer (e.g., "SuccessfulBackups").
     #>
     param(
         [string]$ServerIP,
-        [string]$Channel = "SuccessfulBackups"
+        [string]$Transport = "SuccessfulBackups"
     )
 
     try {
         $uri = "http://${ServerIP}:$Script:NotificationsServerPort/api/v1/notify"
         $body = @{
             type = "telegram"
-            channels = @($Channel)
+            channels = @($Transport)  # API parameter name is "channels" for backward compatibility
             subject = "Test from $env:COMPUTERNAME"
             body = "VLABS Notifications configuration test`n`nServer: $env:COMPUTERNAME`nTime: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`nStatus: Configuration successful"
         } | ConvertTo-Json
 
         $response = Invoke-RestMethod -Uri $uri -Method Post -Body $body -ContentType "application/json" -TimeoutSec 10 -ErrorAction Stop
 
-        Write-ColorMessage "Test notification sent successfully to '$Channel' channel" -Type Success
+        Write-ColorMessage "Test notification sent successfully to '$Transport' transport" -Type Success
         return $true
     }
     catch {
@@ -217,10 +234,10 @@ $successEvent = Get-WinEvent -FilterHashtable @{
     StartTime = (Get-Date).AddMinutes(-10)
 } -MaxEvents 1 -ErrorAction SilentlyContinue
 
-# Determine backup status
+# Determine backup status and select transport
 if ($successEvent) {
-    # Successful backup
-    $channel = "SuccessfulBackups"
+    # Successful backup - use SuccessfulBackups transport
+    $transport = "SuccessfulBackups"
     $subject = "EMOJI_CHECK Backup Successful - $env:COMPUTERNAME"
     $status = "Success"
 
@@ -233,8 +250,8 @@ if ($successEvent) {
     $body += "Status: $status`n`n"
     $body += "Details:`n$backupDetails"
 } else {
-    # Failed backup (Event 14 without Event 4)
-    $channel = "FailedBackups"
+    # Failed backup (Event 14 without Event 4) - use FailedBackups transport
+    $transport = "FailedBackups"
     $subject = "EMOJI_X Backup Failed - $env:COMPUTERNAME"
     $status = "Failed"
 
@@ -258,11 +275,11 @@ if ($successEvent) {
     $body += "Error Details:`n$errorDetails"
 }
 
-# Send notification
+# Send notification using transport
 try {
     $payload = @{
         type = "telegram"
-        channels = @($channel)
+        channels = @($transport)  # API parameter name is "channels" but references transport name
         subject = $subject
         body = $body
     } | ConvertTo-Json -Depth 3
@@ -470,14 +487,14 @@ function Invoke-WSBackupConfiguration {
         if ($sendTest -ne 'n' -and $sendTest -ne 'N') {
             Write-Host ""
             Write-ColorMessage "Sending test notification..." -Type Info
-            Send-TestNotification -ServerIP $Script:Config.NotificationsServerIP -Channel "SuccessfulBackups"
+            Send-TestNotification -ServerIP $Script:Config.NotificationsServerIP -Transport "SuccessfulBackups"
         }
 
         Write-Host ""
         Write-ColorMessage "Windows Server Backup notifications enabled successfully!" -Type Success
         Write-Host ""
         Write-Host "The scheduled task will now monitor for Event ID 14 (Backup completed)" -ForegroundColor Gray
-        Write-Host "and automatically send notifications to your Telegram channels." -ForegroundColor Gray
+        Write-Host "and automatically send notifications using configured transports." -ForegroundColor Gray
     } else {
         Write-ColorMessage "Failed to create scheduled task" -Type Error
     }

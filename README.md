@@ -8,7 +8,7 @@ Monitor Windows events and automatically send notifications to Telegram channels
 
 ## Overview
 
-This PowerShell wizard helps you configure **Windows Scheduled Tasks** that monitor Windows events (like Windows Server Backup completion) and automatically send notifications to your Telegram channels through the NotificationsServer.
+This PowerShell wizard helps you configure **Windows Scheduled Tasks** that monitor Windows events (like Windows Server Backup completion) and automatically send notifications via the NotificationsServer using **Transports** (named bot + channel combinations).
 
 ### Key Features
 
@@ -70,16 +70,41 @@ Monitors Windows Server Backup events and sends notifications:
 **Successful Backup:**
 - Triggers on: Event ID 14 (Backup operation completed)
 - Verifies: Event ID 4 (Successful backup) exists
-- Sends to: `SuccessfulBackups` Telegram channel
+- Sends to: `SuccessfulBackups` transport
 
 **Failed Backup:**
 - Triggers on: Event ID 14 (Backup operation completed)
 - Checks: No Event ID 4 found (indicates failure)
-- Sends to: `FailedBackups` Telegram channel
+- Sends to: `FailedBackups` transport
 
 ---
 
 ## How It Works
+
+### Understanding Transports
+
+**What are Transports?**
+
+A **transport** is a named combination of a Telegram bot and channel, configured on the NotificationsServer. This abstraction means:
+- You reference simple names like `SuccessfulBackups` from PowerShell
+- The server manages the bot tokens and channel IDs
+- You don't need to know or store sensitive credentials on Windows machines
+
+**Example:**
+```yaml
+# On NotificationsServer (catalog.yaml)
+transports:
+  SuccessfulBackups:
+    bot: VLABS_Notifications_bot
+    channel: VLABS-BK-Successful-Notification
+```
+
+**From PowerShell:**
+```powershell
+channels = @("SuccessfulBackups")  # References the transport
+```
+
+The server resolves "SuccessfulBackups" to the correct bot and channel automatically.
 
 ### Architecture
 
@@ -96,7 +121,8 @@ Monitors Windows Server Backup events and sends notifications:
 
 3. **NotificationsServer Integration**
    - Uses REST API (`POST /api/v1/notify`)
-   - Sends to catalog-managed Telegram channels
+   - References transports by name (e.g., "SuccessfulBackups")
+   - Server resolves transport to bot + channel
    - Includes timestamp, server name, and event details
 
 ### Event Flow Example
@@ -148,7 +174,7 @@ This allows the wizard to remember your settings and update configurations witho
 Executes PowerShell script that:
 1. Queries Event Log for recent Event ID 4 (success) or errors
 2. Determines backup status (success/failure)
-3. Sends notification to appropriate Telegram channel
+3. Sends notification to appropriate transport
 
 ### Security
 - Runs as: SYSTEM
@@ -178,7 +204,7 @@ Creating scheduled task "VLABS - WSBackup Notifications"...
 Task created successfully!
 
 Testing notification...
-✓ Test notification sent to SuccessfulBackups channel
+✓ Test notification sent to SuccessfulBackups transport
 ```
 
 ### Updating Configuration
