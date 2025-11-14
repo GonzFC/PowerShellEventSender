@@ -310,10 +310,16 @@ try {
     # Now update the task with proper event trigger using XML
     $taskXml = [xml](Export-ScheduledTask -TaskName $taskName)
 
-    # Remove the startup trigger
-    $taskXml.Task.Triggers.RemoveAll()
+    # Remove existing Triggers element
+    $oldTriggers = $taskXml.Task.Triggers
+    if ($oldTriggers) {
+        $taskXml.Task.RemoveChild($oldTriggers) | Out-Null
+    }
 
-    # Create event trigger XML
+    # Create new Triggers element
+    $triggersElement = $taskXml.CreateElement("Triggers", $taskXml.Task.NamespaceURI)
+
+    # Create event trigger XML query
     $eventTriggerXml = @"
 <QueryList>
   <Query Id="0" Path="Microsoft-Windows-Backup">
@@ -322,7 +328,7 @@ try {
 </QueryList>
 "@
 
-    # Create new EventTrigger element
+    # Create EventTrigger element
     $eventTrigger = $taskXml.CreateElement("EventTrigger", $taskXml.Task.NamespaceURI)
 
     # Add Subscription element
@@ -335,12 +341,11 @@ try {
     $enabled.InnerText = "true"
     $eventTrigger.AppendChild($enabled) | Out-Null
 
-    # Add trigger to task
-    if ($null -eq $taskXml.Task.Triggers) {
-        $triggers = $taskXml.CreateElement("Triggers", $taskXml.Task.NamespaceURI)
-        $taskXml.Task.AppendChild($triggers) | Out-Null
-    }
-    $taskXml.Task.Triggers.AppendChild($eventTrigger) | Out-Null
+    # Append event trigger to Triggers element
+    $triggersElement.AppendChild($eventTrigger) | Out-Null
+
+    # Append Triggers element to Task
+    $taskXml.Task.AppendChild($triggersElement) | Out-Null
 
     # Re-register task with updated XML
     Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
