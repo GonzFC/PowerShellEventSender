@@ -36,7 +36,14 @@ This PowerShell wizard helps you configure **Windows Scheduled Tasks** that moni
 
 Save `Setup-VLABSNotifications.ps1` to your Windows machine.
 
-### 2. Run as Administrator
+### 2. Test Syntax (Optional but Recommended)
+
+```powershell
+# Verify script syntax before running
+.\Test-Syntax.ps1
+```
+
+### 3. Run as Administrator
 
 ```powershell
 # Right-click PowerShell and select "Run as Administrator"
@@ -44,7 +51,7 @@ cd C:\Path\To\Script
 .\Setup-VLABSNotifications.ps1
 ```
 
-### 3. Follow the Wizard
+### 4. Follow the Wizard
 
 The wizard will guide you through:
 1. Choosing a notification type (Windows Server Backup, etc.)
@@ -250,7 +257,9 @@ Configuration updated!
 PowerShellEventSender/
 ├── README.md                          # This file
 ├── Setup-VLABSNotifications.ps1      # Main wizard script
+├── Test-Syntax.ps1                   # Syntax validation script
 ├── USAGE.md                          # Detailed usage guide
+├── TESTING.md                        # Testing guide
 └── ARCHITECTURE.md                   # Technical architecture details
 ```
 
@@ -350,6 +359,7 @@ See [PowerShell-Integration.md](../Integration%20Documentation/PowerShell-Integr
 
 **This Project:**
 - [USAGE.md](USAGE.md) - Detailed usage instructions
+- [TESTING.md](TESTING.md) - Testing and validation guide
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical design and implementation
 
 ---

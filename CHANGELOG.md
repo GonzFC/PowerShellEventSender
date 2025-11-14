@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- PowerShell parsing errors with nested here-strings on Windows PowerShell 5.1
+- Variable interpolation issues in generated scripts
+- String terminator errors in script generation
+
+### Added
+- Test-Syntax.ps1 for pre-flight syntax validation
+- TESTING.md with comprehensive testing guide
+- Pre-deployment and post-configuration test procedures
+
 ### Planned
 - Windows Update event monitoring
 - Service status change notifications
