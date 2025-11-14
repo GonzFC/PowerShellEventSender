@@ -78,6 +78,29 @@ Monitors Windows Server Backup events and sends notifications:
 - Includes detailed error information from Event ID 5
 - Sends to: `FailedBackups` transport
 
+### Disk Space Notifications
+
+Monitors local fixed HDD/SSD drives and sends low disk space alerts:
+
+**Hybrid Trigger Approach:**
+- **Time-based**: Runs every 6 hours automatically
+- **Event-based**: Triggers on Event ID 2013 (Srv - Low Disk Space)
+
+**Drive Monitoring:**
+- Monitors: Local fixed HDD/SSD drives only
+- Excludes: USB drives, network mapped drives, iSCSI, optical drives
+- Threshold: <20% free space
+- Throttling: Once per 6 hours per drive (registry-based)
+
+**Notification Details:**
+- Drive letter (C:, D:, etc.)
+- Drive label
+- Free space / Total space (in GB)
+- Percentage free
+- Server name and timestamp
+
+**Transport:** `LowDiskSpace`
+
 ---
 
 ## How It Works

@@ -10,11 +10,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Windows Update event monitoring
 - Service status change notifications
-- Disk space alert monitoring
 - Security event notifications
 - Multiple NotificationsServer support
 - HTTPS/TLS support
 - API authentication
+
+## [0.2.0] - 2025-11-14
+
+### Added
+- **Disk Space Monitoring**: Complete disk space alert system
+  - Hybrid trigger: Time-based (every 6 hours) + Event-based (Event ID 2013)
+  - Monitors local fixed HDD/SSD drives only
+  - Intelligent drive filtering: Excludes USB, network mapped, iSCSI, and optical drives
+  - Threshold: <20% free space
+  - Registry-based throttling: One notification per 6 hours per drive
+  - Notification includes: Drive letter, label, GB free/total, percent free
+  - Uses `LowDiskSpace` transport
+  - New scheduled task: "VLABS - Disk Space Notifications"
+  - New menu option: "2. Notify Low Disk Space Alerts"
+
+### Changed
+- Configuration storage now includes `DiskSpaceEnabled` flag
+- Main menu updated to show disk space monitoring status
+- Script version: 0.1.2 → 0.2.0
+
+### Technical Details
+- **Drive Detection Logic**: Uses Get-PhysicalDisk to filter by MediaType (HDD/SSD only)
+- **BusType Filtering**: Excludes USB, iSCSI, and Virtual bus types
+- **Throttling Implementation**: Registry values at `HKLM:\SOFTWARE\VLABS\Notifications\DiskSpace`
+- **Event ID 2013 Reliability**: Hybrid approach ensures monitoring even if Event 2013 fails to fire
+- **Script Location**: `C:\ProgramData\VLABS\Notifications\DiskSpace-Notification.ps1`
+
+### Documentation
+- Added disk space monitoring section to README.md
+- Updated feature list and usage examples
+- Documented hybrid trigger strategy and reliability considerations
 
 ## [0.1.2] - 2025-11-14
 
