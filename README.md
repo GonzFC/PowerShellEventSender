@@ -32,32 +32,52 @@ This PowerShell wizard helps you configure **Windows Scheduled Tasks** that moni
 
 ## Quick Start
 
-### 1. Download the Script
+### One-Liner Installation (Recommended)
 
-Save `Setup-VLABSNotifications.ps1` to your Windows machine.
-
-### 2. Test Syntax (Optional but Recommended)
+The easiest way to install is with a single PowerShell command:
 
 ```powershell
-# Verify script syntax before running
-.\Test-Syntax.ps1
+# Right-click PowerShell and select "Run as Administrator", then run:
+irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
 ```
 
-### 3. Run as Administrator
+**What this does:**
+- Downloads the latest version directly from GitHub
+- Runs the interactive configuration wizard
+- No manual file management required
+- Always gets the latest release
+
+**Security Note:** This command downloads and executes code from GitHub. If you prefer to inspect the code first, see the [Manual Installation](#manual-installation-inspect-first) section below.
+
+---
+
+### Manual Installation (Inspect First)
+
+If you want to review the code before running:
 
 ```powershell
-# Right-click PowerShell and select "Run as Administrator"
-cd C:\Path\To\Script
-.\Setup-VLABSNotifications.ps1
+# Download the script
+$script = irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1
+$script | Out-File -FilePath "$env:TEMP\VLABS-Install.ps1"
+
+# Inspect the code
+notepad "$env:TEMP\VLABS-Install.ps1"
+
+# Run as Administrator after inspection
+# (Right-click PowerShell → "Run as Administrator")
+& "$env:TEMP\VLABS-Install.ps1"
 ```
 
-### 4. Follow the Wizard
+---
 
-The wizard will guide you through:
-1. Choosing a notification type (Windows Server Backup, etc.)
-2. Configuring the NotificationsServer IP address
-3. Creating/updating the Scheduled Task
-4. Testing the configuration
+### Using the Wizard
+
+Once the script runs, the wizard will guide you through:
+1. **Version Check** - Automatically checks for updates
+2. **Choose Features** - Windows Server Backup, Disk Space Alerts, etc.
+3. **Configure Server IP** - Enter your NotificationsServer IP address
+4. **Create Tasks** - Automatically creates Windows Scheduled Tasks
+5. **Test Notifications** - Send test messages to verify setup
 
 ---
 
@@ -215,43 +235,56 @@ Executes PowerShell script that:
 ### First-Time Setup
 
 ```powershell
-PS C:\> .\Setup-VLABSNotifications.ps1
+# Run the one-liner as Administrator
+PS C:\> irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-=== VLABS Notifications Configuration Wizard ===
+[✓] You are running the latest version (v0.3.0)
+
+=============================================
+   VLABS Notifications Configuration Wizard
+=============================================
 
 Choose an option:
-1. Notify Windows Server Backup Status
-0. Update Configuration and Exit
+
+  1. Notify Windows Server Backup Status
+  2. Notify Low Disk Space Alerts
+
+  9. Uninstall - View Instructions
+  0. Update Configuration and Exit
 
 Enter choice: 1
 
 Enter NotificationsServer IP address: 172.16.8.66
 
-Creating scheduled task "VLABS - WSBackup Notifications"...
-Task created successfully!
-
-Testing notification...
-✓ Test notification sent to SuccessfulBackups transport
+[✓] NotificationsServer is reachable and healthy
+[✓] Scheduled task 'VLABS - WSBackup Notifications' configured successfully
+[✓] Test notification sent to SuccessfulBackups transport
 ```
 
 ### Updating Configuration
 
-```powershell
-PS C:\> .\Setup-VLABSNotifications.ps1
+Simply run the one-liner again - it's idempotent:
 
-=== VLABS Notifications Configuration Wizard ===
+```powershell
+# Same command works for updates
+PS C:\> irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+
+[✓] You are running the latest version (v0.3.0)
 
 Current NotificationsServer IP: 172.16.8.66
 
 Choose an option:
-1. Notify Windows Server Backup Status [ENABLED]
-0. Update Configuration and Exit
+
+  1. Notify Windows Server Backup Status [ENABLED]
+  2. Notify Low Disk Space Alerts [ENABLED]
+
+  9. Uninstall - View Instructions
+  0. Update Configuration and Exit
 
 Enter choice: 0
 
-Enter new IP address (or press Enter to keep 172.16.8.66): 192.168.1.100
-
-Configuration updated!
+Press Enter to keep current IP, or enter new IP: 192.168.1.100
+[✓] Configuration saved to registry
 ```
 
 ---

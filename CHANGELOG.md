@@ -14,6 +14,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple NotificationsServer support
 - HTTPS/TLS support
 - API authentication
+- Code signing (for v1.0.0)
+
+## [0.3.0] - 2025-11-16
+
+### Added
+- **One-Liner GitHub Deployment**: Install/update with single PowerShell command
+  - Command: `irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex`
+  - Uses GitHub Releases for distribution (like Chris Titus Tech Windows Utility)
+  - Always downloads latest version automatically
+- **Automatic Version Checking**: Script checks GitHub API for updates on every run
+  - Function: `Test-GitHubVersion`
+  - Displays update notification if newer version available
+  - Shows one-liner command to update
+  - Gracefully handles GitHub API unavailability
+  - Shows "You are running the latest version" when up to date
+- **Uninstall Instructions**: New menu option to view removal steps
+  - Menu option 9: "Uninstall - View Instructions"
+  - Function: `Show-UninstallInstructions`
+  - Lists all VLABS scheduled tasks currently installed
+  - Provides step-by-step removal instructions
+  - Notes that registry config is harmless to leave
+- **AIQD Methodology**: Documented development approach
+  - New file: `AIQD_Methodology.md`
+  - Structured process: Acknowledge, Investigate, Question, Advice, Document
+  - Applied to all significant changes going forward
+- **Release Guide**: Complete release workflow documentation
+  - New file: `RELEASE_GUIDE.md`
+  - Step-by-step GitHub Release creation
+  - Version numbering standards
+  - Security considerations
+  - Best practices and checklists
+
+### Changed
+- **Script Renamed**: `Setup-VLABSNotifications.ps1` → `Install-Run-VLABS_NotificationsClient.ps1`
+  - More descriptive name indicating client role
+  - Clearer that it's for installation and running
+- **Deployment Model**: Transformed from download-first to web-hosted one-liner execution
+  - No manual file downloads required
+  - No need to navigate to script location
+  - Idempotent - safe to run repeatedly
+  - Always gets latest version from GitHub
+- **README.md**: Completely restructured Quick Start section
+  - One-liner installation prominently featured
+  - Manual installation (inspect-first) option provided
+  - Security notes about `| iex` execution
+  - Updated usage examples with v0.3.0 output
+- **Script Header**: Enhanced with one-liner deployment instructions
+  - Shows both one-liner and inspect-first approaches
+  - Updated version to 0.3.0
+  - Added repository URL
+  - Added license information
+
+### Technical Details
+- **Version Configuration**: Added script-level version tracking
+  - Variable: `$Script:Version = "0.3.0"`
+  - Used for version comparison with GitHub
+- **GitHub Integration**:
+  - Repository: `GonzFC/PowerShellEventSender`
+  - API endpoint: `https://api.github.com/repos/GonzFC/PowerShellEventSender/releases/latest`
+  - Download endpoint: `/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1`
+- **Version Check Display**: Fancy bordered notification box
+  - Shows current version vs latest version
+  - Color-coded (Yellow border, Green latest version)
+  - Includes one-liner command to update
+  - Links to changelog
+  - 2-second pause to ensure user sees message
+- **Main Function Flow**: Added version check before configuration load
+  - Order: Admin check → Version check → Load config → Menu loop
+  - Non-blocking - continues if GitHub unreachable
+
+### Documentation
+- Updated all references to script name throughout documentation
+- Added comprehensive release workflow guide
+- Documented AIQD methodology for future development
+- Updated usage examples to reflect one-liner deployment
+- Enhanced security notes about remote execution
+
+### Deployment
+- **Breaking Change**: Users should update bookmarks/documentation to new script name
+- **Migration**: Old downloaded scripts still work, but one-liner is now preferred method
+- **Backward Compatibility**: All features from v0.2.0 preserved
+- **Update Path**: Simply run the one-liner - automatically gets v0.3.0
 
 ## [0.2.0] - 2025-11-14
 

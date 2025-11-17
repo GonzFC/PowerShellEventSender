@@ -1,11 +1,23 @@
 <#
 .SYNOPSIS
-    VLABS Notifications Configuration Wizard
+    VLABS Notifications Client - One-Liner Installation & Configuration Wizard
 
 .DESCRIPTION
     Interactive wizard to configure Windows Event-to-Telegram notifications
     via the NotificationsServer. Creates and manages Windows Scheduled Tasks
     that monitor events and send notifications automatically.
+
+    ONE-LINER DEPLOYMENT:
+    Run directly from GitHub without downloading:
+
+        irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+
+    Or download and inspect first:
+
+        $script = irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1
+        $script | Out-File -FilePath ".\VLABS-Install.ps1"
+        notepad ".\VLABS-Install.ps1"  # Inspect the code
+        .\VLABS-Install.ps1            # Run after inspection
 
     TRANSPORTS ARCHITECTURE:
     This script uses the NotificationsServer's Transports system. A "transport"
@@ -14,21 +26,29 @@
     Example Transports:
     - "SuccessfulBackups" -> Routes to success notification channel
     - "FailedBackups"     -> Routes to failure notification channel
+    - "LowDiskSpace"      -> Routes to disk space alert channel
 
     The NotificationsServer manages the bot tokens and channel IDs. This script
     simply references transport names like "SuccessfulBackups" without needing
     to know the underlying bot/channel details.
 
 .NOTES
-    Version: 0.2.0
+    Version: 0.3.0
     Author: VLABS Infrastructure
-    Requires: Administrator privileges
+    Requires: Administrator privileges, PowerShell 5.1+
     API Compatibility: NotificationsServer API v1.0.0+
+    Repository: https://github.com/GonzFC/PowerShellEventSender
+    License: MIT
 
 .EXAMPLE
-    .\Setup-VLABSNotifications.ps1
+    irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-    Runs the interactive configuration wizard.
+    One-liner: Downloads and runs the wizard directly from GitHub.
+
+.EXAMPLE
+    .\Install-Run-VLABS_NotificationsClient.ps1
+
+    Runs the interactive configuration wizard from a local copy.
 #>
 
 #Requires -RunAsAdministrator
@@ -40,9 +60,12 @@ param()
 # CONFIGURATION
 # ============================================================================
 
+$Script:Version = "0.3.0"
 $Script:RegistryPath = "HKLM:\SOFTWARE\VLABS\Notifications"
 $Script:NotificationsServerPort = 8089
 $Script:Config = @{}
+$Script:GitHubRepo = "GonzFC/PowerShellEventSender"
+$Script:GitHubApiUrl = "https://api.github.com/repos/$Script:GitHubRepo/releases/latest"
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -74,6 +97,71 @@ function Write-ColorMessage {
     }
 
     Write-Host "$($symbols[$Type]) $Message" -ForegroundColor $colors[$Type]
+}
+
+function Test-GitHubVersion {
+    <#
+    .SYNOPSIS
+        Check GitHub for newer version of this script
+    #>
+
+    try {
+        # GitHub API call to get latest release
+        $latestRelease = Invoke-RestMethod -Uri $Script:GitHubApiUrl -TimeoutSec 10 -ErrorAction Stop
+
+        # Extract version from tag (e.g., "v0.3.0" -> "0.3.0")
+        $latestVersion = $latestRelease.tag_name -replace '^v', ''
+
+        # Compare versions
+        if ($latestVersion -ne $Script:Version) {
+            Write-Host ""
+            Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "UPDATE AVAILABLE" -NoNewline -ForegroundColor Yellow
+            Write-Host "                                              ║" -ForegroundColor Yellow
+            Write-Host "║                                                              ║" -ForegroundColor Yellow
+            Write-Host "║  Current Version:  " -NoNewline -ForegroundColor Yellow
+            Write-Host "v$Script:Version" -NoNewline -ForegroundColor White
+            Write-Host ("" + (" " * (40 - $Script:Version.Length))) -NoNewline
+            Write-Host "║" -ForegroundColor Yellow
+            Write-Host "║  Latest Version:   " -NoNewline -ForegroundColor Yellow
+            Write-Host "v$latestVersion" -NoNewline -ForegroundColor Green
+            Write-Host ("" + (" " * (40 - $latestVersion.Length))) -NoNewline
+            Write-Host "║" -ForegroundColor Yellow
+            Write-Host "║                                                              ║" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "Run the one-liner again to get the latest version:" -NoNewline -ForegroundColor White
+            Write-Host "          ║" -ForegroundColor Yellow
+            Write-Host "║                                                              ║" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "irm https://github.com/$Script:GitHubRepo" -NoNewline -ForegroundColor Cyan
+            Write-Host "/" -NoNewline -ForegroundColor Cyan
+            Write-Host "" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "    /releases/latest/download/" -NoNewline -ForegroundColor Cyan
+            Write-Host "" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "    Install-Run-VLABS_NotificationsClient.ps1 | iex" -NoNewline -ForegroundColor Cyan
+            Write-Host "       ║" -ForegroundColor Yellow
+            Write-Host "║                                                              ║" -ForegroundColor Yellow
+            Write-Host "║  " -NoNewline -ForegroundColor Yellow
+            Write-Host "Changelog: " -NoNewline -ForegroundColor White
+            Write-Host "https://github.com/$Script:GitHubRepo/releases" -NoNewline -ForegroundColor Cyan
+            Write-Host " ║" -ForegroundColor Yellow
+            Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+            Write-Host ""
+
+            # Give user a moment to see the message
+            Start-Sleep -Seconds 2
+        }
+        else {
+            Write-ColorMessage "You are running the latest version (v$Script:Version)" -Type Success
+        }
+    }
+    catch {
+        # Silently fail - don't interrupt workflow if GitHub is unreachable
+        Write-ColorMessage "Could not check for updates (GitHub unreachable)" -Type Warning
+    }
 }
 
 function Initialize-Configuration {
@@ -705,11 +793,71 @@ function Show-MainMenu {
     $diskspaceStatus = if ($Script:Config.DiskSpaceEnabled) { "[ENABLED]" } else { "" }
     Write-Host "  2. Notify Low Disk Space Alerts $diskspaceStatus" -ForegroundColor White
     Write-Host ""
+    Write-Host "  9. Uninstall - View Instructions" -ForegroundColor DarkGray
     Write-Host "  0. Update Configuration and Exit" -ForegroundColor Gray
     Write-Host ""
 
     $choice = Read-Host "Enter choice"
     return $choice
+}
+
+function Show-UninstallInstructions {
+    <#
+    .SYNOPSIS
+        Display uninstall instructions
+    #>
+
+    Clear-Host
+    Write-Host ""
+    Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║                                                              ║" -ForegroundColor Red
+    Write-Host "║  " -NoNewline -ForegroundColor Red
+    Write-Host "UNINSTALL INSTRUCTIONS" -NoNewline -ForegroundColor Yellow
+    Write-Host "                                       ║" -ForegroundColor Red
+    Write-Host "║                                                              ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host ""
+    Write-ColorMessage "To uninstall VLABS Notifications:" -Type Warning
+    Write-Host ""
+    Write-Host "  1. Open Task Scheduler:" -ForegroundColor White
+    Write-Host "     - Press " -NoNewline -ForegroundColor Gray
+    Write-Host "Win + R" -NoNewline -ForegroundColor Cyan
+    Write-Host ", type " -NoNewline -ForegroundColor Gray
+    Write-Host "taskschd.msc" -NoNewline -ForegroundColor Cyan
+    Write-Host ", press Enter" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  2. Delete all scheduled tasks starting with:" -ForegroundColor White
+    Write-Host "     " -NoNewline
+    Write-Host "VLABS -" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "     Current tasks:" -ForegroundColor Gray
+
+    # List current VLABS tasks
+    $vlabsTasks = Get-ScheduledTask -TaskName "VLABS*" -ErrorAction SilentlyContinue
+    if ($vlabsTasks) {
+        foreach ($task in $vlabsTasks) {
+            Write-Host "       • " -NoNewline -ForegroundColor DarkGray
+            Write-Host $task.TaskName -ForegroundColor Cyan
+        }
+    } else {
+        Write-Host "       (No VLABS tasks currently installed)" -ForegroundColor DarkGray
+    }
+
+    Write-Host ""
+    Write-Host "  3. (Optional) Clean up generated scripts:" -ForegroundColor White
+    Write-Host "     Delete folder: " -NoNewline -ForegroundColor Gray
+    Write-Host "C:\ProgramData\VLABS\Notifications\" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  4. (Optional) Remove registry configuration:" -ForegroundColor White
+    Write-Host "     Delete registry key: " -NoNewline -ForegroundColor Gray
+    Write-Host "HKLM:\SOFTWARE\VLABS\Notifications" -ForegroundColor Cyan
+    Write-Host ""
+    Write-ColorMessage "Registry configuration is harmless and may be useful if you reinstall" -Type Info
+    Write-Host ""
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Gray
+    Write-Host ""
+
+    Read-Host "Press Enter to return to main menu"
 }
 
 function Invoke-WSBackupConfiguration {
@@ -957,6 +1105,9 @@ function Main {
         exit 1
     }
 
+    # Check for updates
+    Test-GitHubVersion
+
     # Load configuration
     Initialize-Configuration
 
@@ -970,6 +1121,9 @@ function Main {
             }
             '2' {
                 Invoke-DiskSpaceConfiguration
+            }
+            '9' {
+                Show-UninstallInstructions
             }
             '0' {
                 Invoke-UpdateConfiguration
