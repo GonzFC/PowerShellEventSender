@@ -8,20 +8,20 @@
     that monitor events and send notifications automatically.
 
     ONE-LINER DEPLOYMENT:
-    Run directly from GitHub without downloading:
+    Run directly from GitHub without downloading (PowerShell 5.1+):
 
-        iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
-
-    Short version (PowerShell 7+):
-
-        iwr -useb https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
     Or download and inspect first:
 
-        $script = (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $script = (iwr 'https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
         $script | Out-File -FilePath "$env:TEMP\VLABS-Install.ps1"
         notepad "$env:TEMP\VLABS-Install.ps1"  # Inspect the code
         & "$env:TEMP\VLABS-Install.ps1"        # Run after inspection
+
+    NOTE: TLS 1.2 enforcement is required because PowerShell 5.1 defaults to TLS 1.0,
+    but GitHub requires TLS 1.2 for secure connections.
 
     TRANSPORTS ARCHITECTURE:
     This script uses the NotificationsServer's Transports system. A "transport"
@@ -37,7 +37,7 @@
     to know the underlying bot/channel details.
 
 .NOTES
-    Version: 0.3.1
+    Version: 0.3.2
     Author: VLABS Infrastructure
     Requires: Administrator privileges, PowerShell 5.1+
     API Compatibility: NotificationsServer API v1.0.0+
@@ -45,9 +45,10 @@
     License: MIT
 
 .EXAMPLE
-    iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
     One-liner: Downloads and runs the wizard directly from GitHub (PowerShell 5.1+).
+    TLS 1.2 enforcement is required for GitHub connectivity.
 
 .EXAMPLE
     .\Install-Run-VLABS_NotificationsClient.ps1
@@ -64,12 +65,18 @@ param()
 # CONFIGURATION
 # ============================================================================
 
-$Script:Version = "0.3.1"
+$Script:Version = "0.3.2"
 $Script:RegistryPath = "HKLM:\SOFTWARE\VLABS\Notifications"
 $Script:NotificationsServerPort = 8089
 $Script:Config = @{}
 $Script:GitHubRepo = "GonzFC/PowerShellEventSender"
 $Script:GitHubApiUrl = "https://api.github.com/repos/$Script:GitHubRepo/releases/latest"
+
+# Ensure TLS 1.2 is enabled for GitHub API calls and downloads
+# PowerShell 5.1 defaults to TLS 1.0, but GitHub requires TLS 1.2
+if ([Net.ServicePointManager]::SecurityProtocol -notmatch 'Tls12') {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+}
 
 # ============================================================================
 # HELPER FUNCTIONS

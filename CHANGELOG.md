@@ -16,6 +16,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API authentication
 - Code signing (for v1.0.0)
 
+## [0.3.2] - 2025-11-16
+
+### Fixed
+- **Deployment URL Changed**: Switched from GitHub Releases to raw.githubusercontent.com
+  - Issue: GitHub Release v0.3.1 was not created properly (file not attached)
+  - Browser test showed 404 on /releases/latest/download/ endpoint
+  - Solution: Use raw.githubusercontent.com/main/ URL for direct access to latest code
+  - New URL: `https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1`
+  - Simpler workflow: No release creation needed, always gets latest main branch
+  - Tested and verified working on Windows Server
+
+### Added
+- **TLS 1.2 Enforcement**: Added automatic TLS 1.2 enablement
+  - PowerShell 5.1 defaults to TLS 1.0
+  - GitHub requires TLS 1.2 for all connections
+  - Script now auto-enables TLS 1.2 on startup if not already enabled
+  - One-liner command includes explicit TLS 1.2 setting
+  - Command: `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`
+  - Prevents "connection terminated unexpectedly" errors
+
+### Changed
+- One-liner command simplified and fixed:
+  - Old (broken): `irm https://github.com/.../releases/latest/download/...ps1 | iex`
+  - New (working): `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex`
+- All documentation updated with corrected URL and TLS 1.2 requirement
+- Version: 0.3.1 → 0.3.2
+- Deployment strategy: GitHub Releases → Direct GitHub raw URL
+
+### Technical Details
+- Raw GitHub URL always serves latest main branch code
+- No release creation workflow needed
+- TLS 1.2 check added at script startup (line 75-79)
+- Works with PowerShell 5.1+ on Windows Server 2012 R2+
+- Tested on actual Windows Server with successful download and execution
+
+### Documentation
+- README.md: Updated Quick Start with TLS 1.2 explanation
+- README.md: Updated all examples with working command
+- RELEASE_GUIDE.md: Updated with new URL pattern
+- Script header: Updated deployment instructions
+
 ## [0.3.1] - 2025-11-16
 
 ### Fixed

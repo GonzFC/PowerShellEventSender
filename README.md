@@ -38,20 +38,18 @@ The easiest way to install is with a single PowerShell command:
 
 ```powershell
 # Right-click PowerShell and select "Run as Administrator", then run:
-iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
-```
-
-**Short version (PowerShell 7+):**
-```powershell
-iwr -useb https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 ```
 
 **What this does:**
-- Downloads the latest version directly from GitHub
+- Enables TLS 1.2 (required for GitHub connectivity)
+- Downloads the latest version directly from GitHub main branch
 - Runs the interactive configuration wizard
 - No manual file management required
-- Always gets the latest release
+- Always gets the latest code
 - Works with PowerShell 5.1+ (Windows Server 2012 R2+)
+
+**Why TLS 1.2?** PowerShell 5.1 defaults to TLS 1.0, but GitHub requires TLS 1.2. The command enables it automatically.
 
 **Security Note:** This command downloads and executes code from GitHub. If you prefer to inspect the code first, see the [Manual Installation](#manual-installation-inspect-first) section below.
 
@@ -62,8 +60,9 @@ iwr -useb https://github.com/GonzFC/PowerShellEventSender/releases/latest/downlo
 If you want to review the code before running:
 
 ```powershell
-# Download the script
-$script = (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+# Enable TLS 1.2 and download the script
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$script = (iwr 'https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 $script | Out-File -FilePath "$env:TEMP\VLABS-Install.ps1"
 
 # Inspect the code
@@ -242,9 +241,9 @@ Executes PowerShell script that:
 
 ```powershell
 # Run the one-liner as Administrator
-PS C:\> iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+PS C:\> [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-[✓] You are running the latest version (v0.3.1)
+[✓] You are running the latest version (v0.3.2)
 
 =============================================
    VLABS Notifications Configuration Wizard
@@ -273,9 +272,9 @@ Simply run the one-liner again - it's idempotent:
 
 ```powershell
 # Same command works for updates
-PS C:\> iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+PS C:\> [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-[✓] You are running the latest version (v0.3.1)
+[✓] You are running the latest version (v0.3.2)
 
 Current NotificationsServer IP: 172.16.8.66
 
