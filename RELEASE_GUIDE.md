@@ -11,7 +11,7 @@ This project uses GitHub Releases to enable one-liner PowerShell deployment, sim
 Users install/update with a single command:
 
 ```powershell
-irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 ```
 
 This command:
@@ -133,7 +133,7 @@ git push origin main
    Install or update with a single PowerShell command:
 
    \`\`\`powershell
-   irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+   iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
    \`\`\`
 
    ## ✨ What's New in v0.3.0
@@ -203,7 +203,7 @@ After publishing, test the one-liner:
 
 ```powershell
 # Test in PowerShell (as Administrator)
-irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 ```
 
 **Expected Behavior:**

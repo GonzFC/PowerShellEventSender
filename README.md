@@ -38,7 +38,12 @@ The easiest way to install is with a single PowerShell command:
 
 ```powershell
 # Right-click PowerShell and select "Run as Administrator", then run:
-irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+```
+
+**Short version (PowerShell 7+):**
+```powershell
+iwr -useb https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
 ```
 
 **What this does:**
@@ -46,6 +51,7 @@ irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Ins
 - Runs the interactive configuration wizard
 - No manual file management required
 - Always gets the latest release
+- Works with PowerShell 5.1+ (Windows Server 2012 R2+)
 
 **Security Note:** This command downloads and executes code from GitHub. If you prefer to inspect the code first, see the [Manual Installation](#manual-installation-inspect-first) section below.
 
@@ -57,7 +63,7 @@ If you want to review the code before running:
 
 ```powershell
 # Download the script
-$script = irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1
+$script = (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 $script | Out-File -FilePath "$env:TEMP\VLABS-Install.ps1"
 
 # Inspect the code
@@ -236,9 +242,9 @@ Executes PowerShell script that:
 
 ```powershell
 # Run the one-liner as Administrator
-PS C:\> irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+PS C:\> iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 
-[✓] You are running the latest version (v0.3.0)
+[✓] You are running the latest version (v0.3.1)
 
 =============================================
    VLABS Notifications Configuration Wizard
@@ -267,9 +273,9 @@ Simply run the one-liner again - it's idempotent:
 
 ```powershell
 # Same command works for updates
-PS C:\> irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+PS C:\> iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 
-[✓] You are running the latest version (v0.3.0)
+[✓] You are running the latest version (v0.3.1)
 
 Current NotificationsServer IP: 172.16.8.66
 

@@ -10,14 +10,18 @@
     ONE-LINER DEPLOYMENT:
     Run directly from GitHub without downloading:
 
-        irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+        iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+
+    Short version (PowerShell 7+):
+
+        iwr -useb https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
     Or download and inspect first:
 
-        $script = irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1
-        $script | Out-File -FilePath ".\VLABS-Install.ps1"
-        notepad ".\VLABS-Install.ps1"  # Inspect the code
-        .\VLABS-Install.ps1            # Run after inspection
+        $script = (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
+        $script | Out-File -FilePath "$env:TEMP\VLABS-Install.ps1"
+        notepad "$env:TEMP\VLABS-Install.ps1"  # Inspect the code
+        & "$env:TEMP\VLABS-Install.ps1"        # Run after inspection
 
     TRANSPORTS ARCHITECTURE:
     This script uses the NotificationsServer's Transports system. A "transport"
@@ -33,7 +37,7 @@
     to know the underlying bot/channel details.
 
 .NOTES
-    Version: 0.3.0
+    Version: 0.3.1
     Author: VLABS Infrastructure
     Requires: Administrator privileges, PowerShell 5.1+
     API Compatibility: NotificationsServer API v1.0.0+
@@ -41,9 +45,9 @@
     License: MIT
 
 .EXAMPLE
-    irm https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1 | iex
+    iex (iwr 'https://github.com/GonzFC/PowerShellEventSender/releases/latest/download/Install-Run-VLABS_NotificationsClient.ps1' -UseBasicParsing).Content
 
-    One-liner: Downloads and runs the wizard directly from GitHub.
+    One-liner: Downloads and runs the wizard directly from GitHub (PowerShell 5.1+).
 
 .EXAMPLE
     .\Install-Run-VLABS_NotificationsClient.ps1
@@ -60,7 +64,7 @@ param()
 # CONFIGURATION
 # ============================================================================
 
-$Script:Version = "0.3.0"
+$Script:Version = "0.3.1"
 $Script:RegistryPath = "HKLM:\SOFTWARE\VLABS\Notifications"
 $Script:NotificationsServerPort = 8089
 $Script:Config = @{}

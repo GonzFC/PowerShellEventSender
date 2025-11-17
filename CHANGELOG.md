@@ -16,6 +16,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API authentication
 - Code signing (for v1.0.0)
 
+## [0.3.1] - 2025-11-16
+
+### Fixed
+- **One-Liner Download Failure**: Changed from `irm` (Invoke-RestMethod) to `iwr` (Invoke-WebRequest)
+  - Issue: `irm` was failing with "connection terminated unexpectedly" error
+  - Root Cause: `irm` tries to parse content (JSON/XML), struggles with large files (~50KB)
+  - Solution: Use `iwr -UseBasicParsing` with `.Content` property for raw text download
+  - New command (PowerShell 5.1+): `iex (iwr 'URL' -UseBasicParsing).Content`
+  - Short version (PowerShell 7+): `iwr -useb URL | iex`
+  - More reliable for large script files
+  - Better streaming support
+  - Proven pattern used by Chris Titus Tech and other popular PowerShell tools
+
+### Changed
+- All documentation updated with corrected one-liner command
+- README.md: Both long and short versions provided
+- RELEASE_GUIDE.md: All examples updated
+- Script header: Updated with correct deployment command
+- Version: 0.3.0 → 0.3.1
+
+### Technical Details
+- `Invoke-WebRequest` returns response object, not parsed content
+- `.Content` property explicitly extracts text
+- `-UseBasicParsing` avoids IE dependencies, faster
+- Works with PowerShell 5.1+ (Windows Server 2012 R2+)
+- `-useb` is shorthand for `-UseBasicParsing` in PowerShell 7+
+
 ## [0.3.0] - 2025-11-16
 
 ### Added
