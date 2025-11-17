@@ -56,3 +56,5 @@ site/
 notes.txt
 TODO.txt
 *.private.md
+.obsidian/app.json
+/.obsidian
