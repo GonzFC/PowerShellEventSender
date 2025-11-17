@@ -243,7 +243,7 @@ Executes PowerShell script that:
 # Run the one-liner as Administrator
 PS C:\> [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-[✓] You are running the latest version (v0.3.2)
+[✓] You are running the latest version (v0.4.0)
 
 =============================================
    VLABS Notifications Configuration Wizard
@@ -274,7 +274,7 @@ Simply run the one-liner again - it's idempotent:
 # Same command works for updates
 PS C:\> [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/GonzFC/PowerShellEventSender/main/Install-Run-VLABS_NotificationsClient.ps1 | iex
 
-[✓] You are running the latest version (v0.3.2)
+[✓] You are running the latest version (v0.4.0)
 
 Current NotificationsServer IP: 172.16.8.66
 

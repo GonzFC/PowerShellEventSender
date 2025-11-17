@@ -16,6 +16,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API authentication
 - Code signing (for v1.0.0)
 
+## [0.4.0] - 2025-11-17
+
+### Fixed
+- **🎯 CRITICAL: Race Condition in Event Detection** (THE BIG ONE!)
+  - Issue: Script exited silently when Event 4/5 not immediately available after Event 14
+  - Diagnostic revealed: Task ran successfully but found no Event 4/5 → exited with code 0
+  - Timeline: Event 14 fires → Task triggers 1 second later → Event 4 not logged yet → Silent exit
+  - Solution: Added retry logic with 5-second delays (up to 30 seconds total wait)
+  - Now waits for Event 4 (Success) or Event 5 (Failure) to be logged after Event 14
+  - **This was why notifications never worked!**
+
+- **PowerShell.exe Full Path**
+  - Changed from relative `PowerShell.exe` to absolute path
+  - Now uses: `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`
+  - Ensures reliability when running as SYSTEM account
+  - Fixes both WSBackup and DiskSpace scheduled tasks
+
+### Added
+- **Comprehensive File-Based Logging**
+  - All generated scripts now write to log files
+  - Log location: `C:\ProgramData\VLABS\Notifications\Logs\`
+  - WSBackup logs: `WSBackup-YYYYMM.log` (monthly rotation)
+  - Logs every step: script start, event detection, retries, notification sending, errors
+  - Log levels: INFO, SUCCESS, ERROR, WARN
+  - **No more invisible errors!**
+
+- **Detailed Debug Information**
+  - Logs show exactly what script is doing at each step
+  - Retry attempts logged with timestamps
+  - Event detection results logged
+  - API call results and errors logged
+  - Script execution start/end logged
+
+- **Retry Logic with Intelligent Delays**
+  - Maximum 6 retries (30 seconds total)
+  - 5-second delay between retries
+  - Breaks early when Event 4 or 5 found
+  - Logs each retry attempt
+  - Prevents race condition between Event 14 and Event 4/5
+
+### Changed
+- Generated script structure completely rewritten
+- Script version embedded in generated files (0.4.0)
+- Error handling now uses file logging instead of only Event Log
+- Event Log logging kept as backup fallback
+- More descriptive log messages throughout
+- Version: 0.3.2 → 0.4.0
+
+### Technical Details
+- **Retry Algorithm:**
+  ```
+  for i = 1 to 6:
+      Check for Event 4 or Event 5
+      if found: break
+      if not found and i < 6: wait 5 seconds
+  ```
+- **Log File Format:** `[YYYY-MM-DD HH:mm:ss] [LEVEL] Message`
+- **Monthly Log Rotation:** New log file each month (e.g., WSBackup-202511.log)
+- **Robust Error Handling:** Try-catch blocks log detailed exception information
+- **PowerShell Path:** Absolute path works across all Windows versions and security contexts
+
+### Diagnostic Evidence
+From actual diagnostic run on Windows Server:
+- ✅ Tasks created and enabled
+- ✅ Task execution history shows Event 100, 200, 201, 102 (all success codes)
+- ✅ Backup Event 14 at 23:47:08
+- ✅ Task ran at 23:47:09 (1 second later)
+- ✅ Task completed with exit code 0
+- ❌ **No notification sent** (script exited silently - Event 4 not found yet)
+
+### Testing
+- Diagnostic script created: `Diagnose-VLABSNotifications.ps1`
+- Troubleshooting guide created: `TROUBLESHOOTING.md`
+- Issue identified through comprehensive diagnostic analysis
+- Fix tested with retry logic and logging
+
+### Documentation
+- Added TROUBLESHOOTING.md with diagnostic procedures
+- Updated all version references to 0.4.0
+- Documented race condition fix in code comments
+- Added logging examples to troubleshooting guide
+
 ## [0.3.2] - 2025-11-16
 
 ### Fixed
